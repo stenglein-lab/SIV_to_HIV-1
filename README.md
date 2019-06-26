@@ -8,5 +8,5 @@ Analysis of variants arising during passage of SIVs in humanized mice
 2. Extract subsets of these alignments containing only HIV-1 sequences or only SIV sequences. [split_seqs](./split_seqs)
 3. Create a position probability matrix: For each position of the alignment, tabulate the number of observations of each amino acid (or gap). Do this separately for HIV & SIV sequences. [generate_ppms](./generate_ppms)
 4. For each protein of each of the 3 viruses we were studying, create a mapping of the amino acid position in each protein to the position in the multiple sequence alignment. This works because we are experimentally working with viruses whose sequences are already contained in the compendium alignments. [generate_mapping](./generate_mapping)
-5. Validate this mapping. [check_all_mapping](./validate/check_all_mapping)
+5. Validate this mapping. [check_all_mapping](./validate_mapping/check_all_mapping)
 6. The PPM plus mapping information allows us to retreive the frequency in these sets of HIV and SIV sequences of any variant that arise during the passage experiments. This is done in the [viral_variant_explorer](https://github.com/stenglein-lab/viral_variant_explorer) Shiny app.
