@@ -1,0 +1,185 @@
+#!/usr/bin/perl
+
+use strict;
+use Getopt::Long;
+
+my $print_usage = 0;
+
+my $usage = <<USAGE;
+
+  This script takes as input a multiple sequence alignment in fasta format. 
+
+  It calculates observed amino acid frequencies for each amino acid for
+  each column of the alignment.  In other words, it creates a position probabilty
+  matrix (PPM).
+
+  It outputs the PPM to stdout in tab-delimited long/tidy format
+
+  Mark Stenglein,  4/22/2019
+
+  Usage: $0 [-h]  <msa_in_fasta_format>
+
+   [-h]          print this message
+
+   [-p]          optional prefix to print as the first column(s) of the output
+
+
+USAGE
+
+if ((scalar @ARGV == 0) and -t STDIN) { print $usage and exit; }
+
+my @prefix_columns = ();
+
+GetOptions ("h" => \$print_usage, "p=s" => \@prefix_columns);
+
+my %pfm = ();
+my %ppm = ();
+my %pwm = ();
+my %pcas = ();
+my %wcas = ();
+my %log_wcas = ();
+my %pas = ();
+
+my %observed_characters = ();
+my $total_chars = 0;
+
+my $header = undef;
+my $seq = undef;
+my $num_seqs = 0;
+my $number_columns = 0;
+
+# include gap character (-), stop codons (*), and X (any)
+my @aas = qw ( A C D E F G H I K L M N P Q R S T V W Y X - *);
+
+my $line_counter = 0;
+
+# read fasta format multiple sequence alignment file (msa)
+while (<>)
+{
+  chomp;
+  # fasta multiple aligment format
+  if (/>(\S*)/)
+  {
+	  if ($seq)
+	  {
+	     process_seq();
+	  }
+     $header = $1;
+	  $seq = "";
+  }
+  else
+  {
+     $seq .= $_;
+  }
+}
+process_seq(); # last seq
+
+
+warn "$num_seqs sequences and $number_columns columns\n";
+# TODO: ignore/warn for gaps and non-expected characters?
+foreach my $char (sort keys %observed_characters)
+{
+   warn "residue: $char: $observed_characters{$char} observations (out of $total_chars)\n";
+	my $pa = $observed_characters{$char} / $total_chars;
+   ${pas}{$char} = $pa;
+}
+
+
+# calculate ppm 
+for (my $col = 1; $col <= $number_columns; $col++)
+{
+	# calculate total pseudocounts
+	# Rc = # observed AA in this column (diversity)
+	my $Rc = 0;
+	# Nc = total counts in this column
+	my $Nc = 0;
+   # foreach my $char (sort keys %observed_characters)
+   foreach my $char (@aas)
+	{
+	   if ($pfm{$col}{$char} > 0)
+		{
+		   $Rc += 1;
+		}
+		$Nc += $pfm{$col}{$char};
+	}
+
+   # foreach my $char (sort keys %observed_characters)
+   foreach my $char (@aas)
+	{
+	   # nca = count for amino acid a in this column
+	   my $nca = $pfm{$col}{$char};
+
+		# pca = estimated probabilty, based on actual counts plus pseuocounts
+      my $pca = ($nca / $Nc);
+
+		$pcas{$col}{$char} = $pca;
+
+	}
+}
+
+
+# output the position probability matrix
+## my @matrix_refs = (\%pcas, \%wcas, \%log_wcas);
+## my @matrix_refs = (\%pcas, \%wcas);
+my @matrix_refs = (\%pcas);
+foreach my $matrix (@matrix_refs)
+{
+   foreach my $char (@aas)
+   {
+	   # print "$char";
+      for (my $col = 1; $col <= $number_columns; $col++)
+      {
+         # prefix columns
+         if (scalar @prefix_columns > 0)
+         {
+            foreach my $pc (@prefix_columns)
+            {
+               print "$pc\t";
+            }
+         }
+
+         print "$col\t$char";
+
+		   if (defined $$matrix{$col}{$char})
+		   {
+	         printf "\t%0.5f",  $$matrix{$col}{$char};
+		   }
+		   else
+		   {
+	         printf "\t0";
+		   }
+
+	      print "\n";
+      }
+   }
+}
+
+
+sub process_seq()
+{
+	chop($seq); # remove last character (* = stop codon) from sequence.
+	my $column_counter = 1;
+	my @columns = split //, $seq;
+	my $number_columns_this_seq = scalar @columns;
+	if (!$number_columns)
+	{
+	   $number_columns = $number_columns_this_seq;
+	}
+	elsif ($number_columns != $number_columns_this_seq)
+	{
+	   warn "warning: sequence: $header doesn't have same # of columns ($number_columns_this_seq) as typical # ($number_columns).  Ignoring.\n";
+		return;
+	}
+
+	foreach my $char (split //, $seq)
+	{
+		$pfm{$column_counter}{$char} += 1;
+		# warn "col: $column_counter char: $char $pfm{$column_counter}{$char}\n";
+		$observed_characters{$char} += 1;
+		$total_chars += 1;
+		$column_counter += 1;
+	}
+	$num_seqs += 1;
+}
+
+
