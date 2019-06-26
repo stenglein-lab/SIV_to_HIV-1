@@ -2,7 +2,7 @@
 Analysis of variants arising during passage of SIVs in humanized mice
 
 
-### Overall workflow for quantifying frequencies of particular amino acids in SIV & HIV sequences available from the [HIV Sequence Database Compendium](https://www.hiv.lanl.gov/content/sequence/HIV/COMPENDIUM/compendium.html)
+#### Overall workflow for quantifying frequencies of particular amino acids in SIV & HIV sequences available from the [HIV Sequence Database Compendium](https://www.hiv.lanl.gov/content/sequence/HIV/COMPENDIUM/compendium.html)
 
 1. Download multiple protein sequence alignments for each HIV/SIV protein from the [Alignments tab](https://www.hiv.lanl.gov/content/sequence/NEWALIGN/align.html).  When I retreived sequences in April 2019, the most recent alignments available were for the 2017 compendium.
 2. Extract subsets of these alignments containing only HIV-1 sequences or only SIV sequences. [split_seqs](./split_seqs)
