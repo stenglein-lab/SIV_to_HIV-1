@@ -1,0 +1,107 @@
+#!/usr/bin/env perl
+
+use strict;
+use Getopt::Long;
+
+my $print_usage = 0;
+
+my $usage = <<USAGE;
+
+  Double check protein sequence -> msa column mapping
+
+  It assumes fasta formatted msa 
+
+  Mark Stenglein,  4/18/2019
+
+  Usage: $0 [-h]  alignment_file fasta_file_with_sequence_to_check mapping_file sequence_id  
+
+   [-h]          print this message
+
+USAGE
+
+if ((scalar @ARGV == 0) and -t STDIN) { print $usage and exit; }
+
+GetOptions ("h" => \$print_usage);
+
+my $alignment_file = shift or print "$usage\nerror: was expecting an alignment file\n" and exit;
+my $sequence_file = shift or print "$usage\nerror: was expecting a sequence file\n" and exit;
+my $mapping_file = shift or print "$usage\nerror: was expecting a mapping file\n" and exit;
+my $sequence_of_interest_id = shift or print "$usage\nerror: was expecting an sequence id\n" and exit;
+
+open (my $aln_fh, "<", $alignment_file) or print $usage and die;
+open (my $map_fh, "<", $mapping_file) or print $usage and die;
+open (my $seq_fh, "<", $sequence_file) or print $usage and die;
+
+my %seqs = ();
+
+my $seq_id = ();
+my $seq = "";
+
+my %map = ();
+
+while (<$map_fh>)
+{
+	chomp;
+   my ($n, $g, $pos, $col) = split "\t";
+	$map{$pos} = $col;
+}
+
+while (<$aln_fh>)
+{
+	chomp;
+   if (/^>(.*)/)
+	{
+	   $seq_id = $1;
+	}
+	else
+	{
+		# append line to sequence
+	   $seqs{$seq_id} .= $_;
+	}
+}
+
+my $sequence_to_check = "";
+
+while (<$seq_fh>)
+{
+	chomp;
+   if (/^>(.*)/)
+	{
+	   # nothing
+	}
+	else
+	{
+		# append line to sequence
+	   $sequence_to_check .= $_;
+	}
+}
+
+# figure out sequence of interests map of aa position to msa column
+my $seq_of_interest = $seqs{$sequence_of_interest_id};
+my @check_chars = split("", $sequence_to_check);
+my @chars = split("", $seq_of_interest);
+
+# warn "sequence of interest: $seq_of_interest\n";
+
+my $pos = 1;
+foreach my $c (@check_chars)
+{
+	my $col = $map{$pos};
+	my $map_c = $chars[$col-1];
+   if ($c ne $map_c)
+	{
+	   print "$sequence_of_interest_id\tposition\t$pos: $c != $map_c\n";
+	}
+	else
+	{
+		# everything's OK alarm
+		if ($pos % 100 == 0)
+		{
+		   # print "\n$pos ";
+		}
+	   # print ".";
+	}
+	$pos += 1;
+}
+# print "\n";
+

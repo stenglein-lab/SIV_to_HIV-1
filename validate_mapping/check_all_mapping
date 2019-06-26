@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# extract protein sequences for viruses of interest from compendium alignments
+#
+# MDS 4.18.2019
+
+
+viruses=(MB897 LB715 EK505)
+virus_seq_ids=(CPZ.CM.05.SIVcpzMB897.EF535994 CPZ.CM.05.LB715.JX178450 CPZ.CM.05.SIVcpzEK505.DQ373065)
+genes=(env gag nef pol rev tat vif vpr vpu)
+
+i=0
+for virus in ${viruses[@]}
+do
+	virus_seq_id=${virus_seq_ids[$i]}
+   for gene in ${genes[@]}
+   do
+
+		grep -A 1 -e "${virus}_${gene}" ${virus}_protein_seqs.fasta > ${virus}_${gene}.fa 
+		grep -e "${virus}	${gene}" protein_msa_mapping.txt > ${virus}_${gene}_map.txt
+	   printf "double-checking:\t%s\t%s\n" $virus $gene
+		./double_check_mapping HIV1_ALL_2017_${gene}_PRO.fasta ${virus}_${gene}.fa ${virus}_${gene}_map.txt $virus_seq_id
+
+   done
+	i=$(( $i + 1 ))
+done
