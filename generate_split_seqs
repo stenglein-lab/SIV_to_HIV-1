@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# extract protein sequences for viruses of interest from compendium alignments
+#
+# MDS 4.18.2019
+
+
+genes=(env gag nef pol rev tat vif vpr vpu)
+
+for gene in ${genes[@]}
+do
+
+	./split_seqs HIV1_ALL_2017_${gene}_PRO.fasta
+
+done

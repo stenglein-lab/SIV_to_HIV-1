@@ -1,0 +1,7 @@
+#!/bin/bash
+
+fa=$1
+
+fasta_to_fasta $fa > ${fa}.1line
+mv $fa ${fa}.multi-line
+mv ${fa}.1line $fa 

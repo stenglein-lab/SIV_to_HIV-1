@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+
+# assume other prefixes are HIV
+my @siv_prefixes = qw (CPZ);
+my @gor_prefixes = qw (GOR);
+
+my $fasta = shift or die;
+
+open (my $fasta_fh, "<", $fasta) or die;
+
+my $hiv_fasta = $fasta.".hiv.fasta";
+my $siv_fasta = $fasta.".siv.fasta";
+
+# open for writing
+open (my $hiv_fh, ">", $hiv_fasta) or die;
+open (my $siv_fh, ">", $siv_fasta) or die;
+
+my $type_map = ();
+
+# foreach my $prefix (@hiv_prefixes)
+# {
+  # $type_map{$prefix} = $hiv_fh;
+# }
+foreach my $prefix (@siv_prefixes)
+{
+  $siv_type_map{$prefix} = $siv_fh;
+}
+foreach my $prefix (@gor_prefixes)
+{
+  $gor_type_map{$prefix} = 1;
+}
+
+my $out_fh = undef;
+
+while (<$fasta_fh>)
+{
+  chomp;
+  if (/^>/)
+  {
+	  $out_fh = undef;
+     if (/>([^\.]*?)\./)
+	  {
+		  my $type = $1;
+		  if ($gor_type_map{$type})
+		  {
+		     # do nothing for Gorilla seqs
+			  $out_fh = undef;
+		  }
+		  elsif ($siv_type_map{$type})
+		  {
+		     $out_fh = $siv_fh;
+		  }
+		  else
+		  {
+		     $out_fh = $hiv_fh;
+		  }
+	  }
+	  else
+	  {
+	    warn "error: couldn't parse XIV subtype: $_\n" and die;
+	  }
+  }
+  if (defined $out_fh)
+  {
+    print $out_fh "$_\n";
+  }
+}

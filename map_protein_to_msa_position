@@ -1,0 +1,84 @@
+#!/usr/bin/env perl
+
+use strict;
+use Getopt::Long;
+
+my $print_usage = 0;
+
+my $usage = <<USAGE;
+
+  This script creates a map of the ungapped position for a particular sequence in a multiple
+  sequence alignment to the column position in the multiple alignment
+
+  It assumes fasta formatted msa 
+
+  Mark Stenglein,  4/18/2019
+
+  Usage: $0 [-h] [-p col1 ... ] alignment_file sequence_id
+
+   [-h]          print this message
+
+   [-p]          optional prefix to print as the first column(s) of the output
+
+USAGE
+
+my @prefix_columns = ();
+
+if ((scalar @ARGV == 0) and -t STDIN) { print $usage and exit; }
+
+GetOptions ("h" => \$print_usage, "p=s" => \@prefix_columns);
+
+my $alignment_file = shift or print "$usage\nerror: was expecting an alignment filename\n" and exit;
+my $sequence_of_interest_id = shift or print "$usage\nerror: was expecting an sequence id\n" and exit;
+
+
+open (my $aln_fh, "<", $alignment_file) or print $usage and die;
+
+my %seqs = ();
+
+my $seq_id = ();
+my $seq = "";
+
+while (<$aln_fh>)
+{
+	chomp;
+   if (/^>(.*)/)
+	{
+	   $seq_id = $1;
+		$seqs{$seq_id} = $seq;
+	}
+	else
+	{
+		# append line to sequence
+	   $seqs{$seq_id} .= $_;
+	}
+}
+
+# figure out sequence of interests map of aa position to msa column
+my $seq_of_interest = $seqs{$sequence_of_interest_id};
+my @chars = split("", $seq_of_interest);
+
+# warn "sequence of interest: $seq_of_interest\n";
+
+my $seq_length = 1;
+my $msa_column = 1;
+
+foreach my $c (@chars)
+{
+	# if a valid AA 1-letter code (plus X)
+   if ($c =~ /[ACDEFGHIKLMNPQRSTVWXY]/)
+	{
+		if (scalar @prefix_columns > 0)
+		{
+		   foreach my $pc (@prefix_columns)
+			{
+			   print "$pc\t";
+			}
+		}
+	   print "$seq_length\t$msa_column\n";
+		$seq_length += 1;
+	}
+	$msa_column += 1;
+}
+
+# warn "$sequence_of_interest_id\t$seq_length\n";

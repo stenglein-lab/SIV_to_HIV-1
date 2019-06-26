@@ -1,0 +1,20 @@
+#!/bin/bash
+
+id=$1
+
+fa=HIV2_ALL_2015_${id}_PRO.fasta
+
+trimal -in $fa -gt 0.75 > HIV2_ALL_2015_${id}_PRO_trimal.fasta
+
+./split_seqs HIV2_ALL_2015_${id}_PRO_trimal.fasta
+
+python Seq2Logo.py -f HIV2_ALL_2015_${id}_PRO_trimal.fasta.hiv.fasta -o HIV2_ALL_2015_${id}_PRO_trimal.fasta.hiv.fasta --format PDF -C 0 -b 50 -y 1:4
+python Seq2Logo.py -f HIV2_ALL_2015_${id}_PRO_trimal.fasta.siv.fasta -o HIV2_ALL_2015_${id}_PRO_trimal.fasta.siv.fasta --format PDF -C 0 -b 50 -y 1:4
+
+./create_pwm blosum62.qij HIV2_ALL_2015_${id}_PRO_trimal.fasta.siv.fasta > HIV2_ALL_2015_${id}_PRO_trimal.fasta.siv.fasta.pwm 
+./create_pwm blosum62.qij HIV2_ALL_2015_${id}_PRO_trimal.fasta.hiv.fasta > HIV2_ALL_2015_${id}_PRO_trimal.fasta.hiv.fasta.pwm 
+
+# ./matrix_divide   HIV2_ALL_2015_${id}_PRO_trimal.fasta.hiv.fasta.pwm HIV2_ALL_2015_${id}_PRO_trimal.fasta.siv.fasta.pwm  > hiv_siv_${id}.txt
+./matrix_subtract   HIV2_ALL_2015_${id}_PRO_trimal.fasta.hiv.fasta.pwm HIV2_ALL_2015_${id}_PRO_trimal.fasta.siv.fasta.pwm  > hiv_siv_${id}.txt 2> hiv_siv_${id}_aa_p_diff.txt
+
+
